@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import time
 from streamlit_option_menu import option_menu
 from DashBoard import DashBoard
 from Chatbot import chatBot
@@ -17,7 +16,7 @@ with st.sidebar:
         menu_title="Main Menu",
         options=[
             "DashBoard",
-            "Chatbot",
+            "ChatBot",
         ],
         icons=["bar-chart-line-fill", "robot"],
         menu_icon="cast",
@@ -26,5 +25,5 @@ with st.sidebar:
 
 if selected == "DashBoard":
     DashBoard()
-elif selected == "Chatbot":
+elif selected == "ChatBot":
     chatBot()

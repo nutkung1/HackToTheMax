@@ -3,6 +3,7 @@ from crewai import Crew, Process
 from ChatBot.agent import ResearchCrewAgents
 from ChatBot.tasks import ResearchCrewTasks
 from pydantic import BaseModel
+import time
 
 
 class ResearchCrew:
@@ -14,7 +15,7 @@ class ResearchCrew:
     def serialize_crew_output(self, crew_output):
         return {"output": crew_output}
 
-    async def run(self, is_discord=False):
+    def run(self, is_discord=False):
         from ChatBot.HybridSearch import hybrid_research
 
         researcher = self.agents.researcher()
@@ -29,7 +30,7 @@ class ResearchCrew:
             process=Process.sequential,
             verbose=True,
         )
-        self.result = await crew.kickoff_async(inputs=self.inputs)
+        self.result = crew.kickoff(inputs=self.inputs)
         self.citation = hybrid_research(self.inputs, 5)[1]
 
         self.serialized_result = self.serialize_crew_output(self.result)
@@ -54,20 +55,24 @@ def has_useful_information(result):
     return "Agent stopped due to iteration limit or time limit" not in result
 
 
-async def ask_question(question: str):
+def process_question(question: str, is_discord: bool = False):
     research_crew = ResearchCrew({"question": question})
-    result = await research_crew.run()
-    crew_output = result["result"]["output"]
+    result = research_crew.run(is_discord)
 
-    if has_useful_information(crew_output.raw):
-        return result
-    else:
-        return "I cannot find any relevant information on this topic"
+    # Check if result["result"] is useful
+    crew_output_raw = result.get("result", "")
+    if not has_useful_information(crew_output_raw):
+        return {
+            "result": "I cannot find any relevant information on this topic",
+            "links": [],
+        }
+
+    return result["result"]["output"].raw
 
 
 def chatBot():
-    st.title("💬 Chatbot")
-    st.caption("🚀 A Streamlit chatbot powered by OpenAI")
+    st.title("💬 Wingzxel Bot")
+    st.caption("🚀 A Streamlit chatbot powered by Wingzxel")
     if "messages" not in st.session_state:
         st.session_state["messages"] = [
             {"role": "assistant", "content": "How can I help you?"}
@@ -77,9 +82,11 @@ def chatBot():
         st.chat_message(msg["role"]).write(msg["content"])
 
     if prompt := st.chat_input():
-
         st.session_state.messages.append({"role": "user", "content": prompt})
         st.chat_message("user").write(prompt)
-        msg = ask_question(prompt)
+        # msg = prompt
+        with st.spinner("Processing..."):
+            msg = process_question(prompt)
+            time.sleep(1)
         st.session_state.messages.append({"role": "assistant", "content": msg})
         st.chat_message("assistant").write(msg)

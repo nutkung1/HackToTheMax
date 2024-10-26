@@ -17,6 +17,8 @@ EMBEDDING_FIELD_NAME = "embedding"
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
+delete_result = collection.delete_many({})
+print(f"Deleted {delete_result.deleted_count} documents from the collection.")
 
 DATA_DIR = os.getenv("DATA_DIR", "AllData")
 # Document loading and splitting
